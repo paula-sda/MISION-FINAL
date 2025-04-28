@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -266,19 +266,38 @@
       isAnimating = true;
       animationProgress = 0;
       confetti();
-      animateLine();
+      animateLine();  // Animación rosa neón en las líneas
       setTimeout(() => {
         messageTitle.classList.remove('blink');
         messageTitle.style.color = "white";
-        messageTitle.textContent = "ENHORABUENA, MISIÓN SUPERADA CON ÉXITO";
-        messageSubtitle.textContent = "Constelación Mathema reactivada";
-        messageSubtitle.classList.add('blinking-green');
+        messageTitle.textContent = "ENHORABUENA";
+        messageSubtitle.textContent = "¡Has completado la secuencia!";
         messageBox.classList.remove('hidden');
-      }, 3000);
+      }, 2000);
+    }
+
+    function animateLine() {
+      ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+      ctx.strokeStyle = '#ff00ff'; // Rosa neón
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      for (let i = 0; i < userSequence.length - 1; i++) {
+        let p1 = points[userSequence[i]];
+        let p2 = points[userSequence[i + 1]];
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+      }
+      ctx.stroke();
+      
+      if (animationProgress < 100) {
+        animationProgress++;
+        requestAnimationFrame(animateLine);
+      }
     }
 
     function showError() {
-      messageTitle.classList.remove('blink');
+      messageTitle.classList.add('blink');
       messageTitle.style.color = "red";
       messageTitle.textContent = "¡Oops! Intentémoslo de nuevo.";
       messageSubtitle.textContent = "La secuencia no es correcta.";
@@ -323,4 +342,3 @@
   </script>
 </body>
 </html>
-
