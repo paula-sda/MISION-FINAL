@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Unir los Puntos - Estrella</title>
+  <title>Constelación Mathema</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Quicksand&display=swap" rel="stylesheet">
   <style>
     body, html {
       margin: 0;
@@ -12,7 +13,7 @@
       height: 100%;
       overflow: hidden;
       touch-action: none;
-      font-family: Arial, sans-serif;
+      font-family: 'Quicksand', sans-serif;
     }
     #game-container {
       position: relative;
@@ -23,239 +24,199 @@
       width: 100%;
       height: 100%;
       display: block;
-      touch-action: none;
     }
     #message {
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: #222;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(10px);
       color: white;
-      padding: 20px;
-      border-radius: 10px;
+      padding: 30px;
+      border-radius: 15px;
       text-align: center;
       z-index: 10;
+    }
+    #error-text {
+      font-size: 28px;
+      font-weight: bold;
+      animation: blink 1s infinite;
+      color: red;
+    }
+    @keyframes blink {
+      0%, 50%, 100% { opacity: 1; }
+      25%, 75% { opacity: 0; }
+    }
+    #subtext {
+      font-family: 'Quicksand', sans-serif;
+      margin-top: 10px;
+      font-size: 18px;
+    }
+    #retry-button {
+      margin-top: 20px;
+      padding: 12px 24px;
+      background: #f9b642;
+      border: none;
+      border-radius: 8px;
+      color: black;
+      font-size: 18px;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    #retry-button:hover {
+      background: #ffc766;
     }
     .hidden {
       display: none;
     }
-    #retry-button {
-      margin-top: 10px;
-      padding: 10px 20px;
-      background: #ff5555;
-      border: none;
-      border-radius: 5px;
-      color: white;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    #retry-button:hover {
-      background: #ff7777;
-    }
   </style>
 </head>
 <body>
-  <div id="game-container">
-    <canvas id="game-canvas"></canvas>
-    <div id="message" class="hidden">
-      <p id="message-text"></p>
-      <button id="retry-button">Reintentar</button>
-    </div>
+<div id="game-container">
+  <canvas id="game-canvas"></canvas>
+  <div id="message" class="hidden">
+    <div id="message-text"></div>
+    <div id="subtext"></div>
+    <button id="retry-button">REINTENTAR</button>
   </div>
+</div>
 
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
-  <script>
-    const canvas = document.getElementById('game-canvas');
-    const ctx = canvas.getContext('2d');
-    const messageBox = document.getElementById('message');
-    const messageText = document.getElementById('message-text');
-    const retryButton = document.getElementById('retry-button');
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+<script>
+const canvas = document.getElementById('game-canvas');
+const ctx = canvas.getContext('2d');
+const messageBox = document.getElementById('message');
+const messageText = document.getElementById('message-text');
+const subtext = document.getElementById('subtext');
+const retryButton = document.getElementById('retry-button');
 
-    let canvasWidth = window.innerWidth;
-    let canvasHeight = window.innerHeight;
-    canvas.width = canvasWidth;
-    canvas.height = canvasHeight;
+let canvasWidth = window.innerWidth;
+let canvasHeight = window.innerHeight;
+canvas.width = canvasWidth;
+canvas.height = canvasHeight;
 
-    let centerX = canvasWidth / 2;
-    let centerY = canvasHeight / 2;
-    let outerRadius = Math.min(canvasWidth, canvasHeight) / 2.5;
-    let points = [];
+let centerX = canvasWidth / 2;
+let centerY = canvasHeight / 2;
+let outerRadius = Math.min(canvasWidth, canvasHeight) / 2.5;
+let points = [];
 
-    const totalPoints = 15;
-    const jump = 7;
-    const correctSequence = [];
-    for (let i = 0; i < totalPoints; i++) {
-      correctSequence.push((i * jump) % totalPoints);
+const totalPoints = 15;
+
+const customSequence = [0, 7, 2, 9, 4, 11, 6, 13, 8, 1, 10, 3, 12, 5, 14];
+
+for (let i = 0; i < totalPoints; i++) {
+  let angle = (i * Math.PI * 2) / totalPoints - Math.PI/2;
+  points.push({
+    x: centerX + outerRadius * Math.cos(angle),
+    y: centerY + outerRadius * Math.sin(angle)
+  });
+}
+
+let userSequence = [];
+let isAnimating = false;
+
+function draw() {
+  ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+  ctx.strokeStyle = 'white';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let i = 0; i < userSequence.length - 1; i++) {
+    let p1 = points[userSequence[i]];
+    let p2 = points[userSequence[i + 1]];
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+  }
+  ctx.stroke();
+
+  points.forEach((p, idx) => {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 12, 0, Math.PI * 2);
+    ctx.fillStyle = 'white';
+    ctx.fill();
+    ctx.strokeStyle = 'cyan';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = 'white';
+    ctx.font = '18px Quicksand';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText((idx + 1), p.x, p.y - 20);
+  });
+}
+
+function getClickedPoint(x, y) {
+  for (let i = 0; i < points.length; i++) {
+    let p = points[i];
+    let dx = p.x - x;
+    let dy = p.y - y;
+    if (Math.sqrt(dx * dx + dy * dy) < 20) {
+      return i;
     }
+  }
+  return null;
+}
 
-    for (let i = 0; i < totalPoints; i++) {
-      let angle = (i * Math.PI * 2) / totalPoints - Math.PI/2;
-      points.push({
-        x: centerX + outerRadius * Math.cos(angle),
-        y: centerY + outerRadius * Math.sin(angle)
-      });
+function pointerEvent(e) {
+  if (isAnimating) return;
+
+  const rect = canvas.getBoundingClientRect();
+  const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+  const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+
+  const clicked = getClickedPoint(x, y);
+  if (clicked !== null && !userSequence.includes(clicked)) {
+    userSequence.push(clicked);
+
+    if (userSequence.length === points.length) {
+      checkSequence();
     }
-
-    let userSequence = [];
-    let animationProgress = 0;
-    let isAnimating = false;
-
-    function draw() {
-      ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-
-      // Dibujar líneas del usuario
-      ctx.strokeStyle = 'white';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      for (let i = 0; i < userSequence.length - 1; i++) {
-        let p1 = points[userSequence[i]];
-        let p2 = points[userSequence[i + 1]];
-        ctx.moveTo(p1.x, p1.y);
-        ctx.lineTo(p2.x, p2.y);
-      }
-      ctx.stroke();
-
-      // Dibujar puntos
-      points.forEach((p, idx) => {
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 12, 0, Math.PI * 2);
-        ctx.fillStyle = 'white';
-        ctx.fill();
-        ctx.strokeStyle = 'cyan';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        ctx.fillStyle = 'white';
-        ctx.font = '18px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText((idx + 1), p.x, p.y - 20);
-      });
-
-      if (isAnimating) animateLine();
-    }
-
-    function getClickedPoint(x, y) {
-      for (let i = 0; i < points.length; i++) {
-        let p = points[i];
-        let dx = p.x - x;
-        let dy = p.y - y;
-        if (Math.sqrt(dx * dx + dy * dy) < 20) {
-          return i;
-        }
-      }
-      return null;
-    }
-
-    function pointerEvent(e) {
-      if (isAnimating) return;
-
-      const rect = canvas.getBoundingClientRect();
-      const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
-      const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
-
-      const clicked = getClickedPoint(x, y);
-      if (clicked !== null && !userSequence.includes(clicked)) {
-        userSequence.push(clicked);
-
-        if (userSequence.length === points.length) {
-          checkSequence();
-        }
-        draw();
-      }
-    }
-
-    canvas.addEventListener('click', pointerEvent);
-    canvas.addEventListener('touchstart', pointerEvent);
-
-    function checkSequence() {
-      if (arraysEqual(userSequence, correctSequence)) {
-        showSuccess();
-      } else {
-        showError();
-      }
-    }
-
-    function arraysEqual(a1, a2) {
-      return JSON.stringify(a1) === JSON.stringify(a2);
-    }
-
-    function showSuccess() {
-      isAnimating = true;
-      animationProgress = 0;
-      confetti();
-      animateLine();
-      setTimeout(() => {
-        messageText.textContent = "¡Enhorabuena! 🎉";
-        messageBox.classList.remove('hidden');
-      }, 3000);
-    }
-
-    function showError() {
-      messageText.textContent = "¡Ups! Secuencia incorrecta.";
-      messageBox.classList.remove('hidden');
-    }
-
-    retryButton.addEventListener('click', () => {
-      userSequence = [];
-      isAnimating = false;
-      messageBox.classList.add('hidden');
-      draw();
-    });
-
-    function animateLine() {
-      ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-
-      ctx.strokeStyle = 'white';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      for (let i = 0; i < correctSequence.length; i++) {
-        let p1 = points[correctSequence[i]];
-        let p2 = points[correctSequence[(i + 1) % correctSequence.length]];
-        ctx.moveTo(p1.x, p1.y);
-        ctx.lineTo(p2.x, p2.y);
-      }
-      ctx.stroke();
-
-      ctx.beginPath();
-      for (let i = 0; i < Math.floor(animationProgress); i++) {
-        let p1 = points[correctSequence[i]];
-        let p2 = points[correctSequence[(i + 1) % correctSequence.length]];
-        ctx.moveTo(p1.x, p1.y);
-        ctx.lineTo(p2.x, p2.y);
-      }
-      ctx.strokeStyle = 'deeppink';
-      ctx.lineWidth = 6;
-      ctx.shadowColor = 'pink';
-      ctx.shadowBlur = 20;
-      ctx.stroke();
-
-      points.forEach((p, idx) => {
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 12, 0, Math.PI * 2);
-        ctx.fillStyle = 'white';
-        ctx.fill();
-        ctx.strokeStyle = 'cyan';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        ctx.fillStyle = 'white';
-        ctx.font = '18px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText((idx + 1), p.x, p.y - 20);
-      });
-
-      if (animationProgress < correctSequence.length) {
-        animationProgress += 0.1;
-        requestAnimationFrame(animateLine);
-      } else {
-        isAnimating = false;
-      }
-    }
-
     draw();
-  </script>
+  }
+}
+
+canvas.addEventListener('click', pointerEvent);
+canvas.addEventListener('touchstart', pointerEvent);
+
+function checkSequence() {
+  if (arraysEqual(userSequence, customSequence)) {
+    showSuccess();
+  } else {
+    showError();
+  }
+}
+
+function arraysEqual(a1, a2) {
+  return JSON.stringify(a1) === JSON.stringify(a2);
+}
+
+function showSuccess() {
+  isAnimating = true;
+  confetti();
+  messageText.innerHTML = "\u2728\u2728\u2728 <br> Enhorabuena, misión conseguida!! <br> Constelación Mathema reactivada correctamente.";
+  messageText.style.animation = '';
+  subtext.innerHTML = '';
+  messageBox.classList.remove('hidden');
+}
+
+function showError() {
+  messageText.innerHTML = "<div id='error-text'>ERROR</div>";
+  subtext.innerHTML = "Constelación no reactivada";
+  messageBox.classList.remove('hidden');
+}
+
+retryButton.addEventListener('click', () => {
+  userSequence = [];
+  isAnimating = false;
+  messageBox.classList.add('hidden');
+  draw();
+});
+
+draw();
+</script>
 </body>
 </html>
