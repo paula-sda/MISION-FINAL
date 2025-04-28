@@ -1,147 +1,345 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Constelación Mathema</title>
+  <title>Unir los Puntos - Estrella</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Quicksand&display=swap" rel="stylesheet">
   <style>
-    body {
+    body, html {
       margin: 0;
       padding: 0;
-      background: linear-gradient(to bottom, #0a0a23, #1a1a3c);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      overflow-x: hidden;
-      font-family: 'Arial', sans-serif;
+      background: black;
+      height: 100%;
+      overflow: hidden;
+      touch-action: none;
+      font-family: 'Quicksand', sans-serif;
+    }
+    #game-container {
       position: relative;
-    }
-
-    .container {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-      gap: 1rem;
-      padding: 2rem;
-      width: 100%;
-      max-width: 800px;
-    }
-
-    .card {
-      background: rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(10px);
-      color: white;
-      padding: 1rem;
-      border-radius: 1rem;
-      text-align: center;
-      font-size: 1.2rem;
-      box-shadow: 0 0 10px rgba(255,255,255,0.2);
-      transition: transform 0.3s;
-    }
-
-    .card:hover {
-      transform: scale(1.05);
-    }
-
-    .blink {
-      color: #00ff00;
-      font-weight: bold;
-      animation: blink-animation 1s steps(5, start) infinite;
-      font-size: 1.8rem;
-      margin-top: 2rem;
-      text-align: center;
-    }
-
-    @keyframes blink-animation {
-      to {
-        visibility: hidden;
-      }
-    }
-
-    /* Modal de inicio */
-    .modal {
-      position: fixed;
-      top: 0;
-      left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      backdrop-filter: blur(8px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
     }
-
-    .modal-content {
-      background: #222;
-      color: #fff;
-      padding: 2rem;
-      border-radius: 1rem;
-      text-align: center;
-      max-width: 90%;
-      position: relative;
+    #game-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      touch-action: none;
     }
-
-    .close-btn {
+    #message, #intro-message {
       position: absolute;
-      top: 1rem;
-      right: 1rem;
-      background: none;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(20, 20, 20, 0.8);
+      backdrop-filter: blur(10px);
+      color: white;
+      padding: 30px;
+      border-radius: 15px;
+      text-align: center;
+      z-index: 10;
+      max-width: 90%;
+    }
+    #message h1, #intro-message h1 {
+      font-family: 'Quicksand', sans-serif;
+      font-size: 2em;
+      margin-bottom: 10px;
+    }
+    #message p, #intro-message p {
+      font-family: 'Quicksand', sans-serif;
+      font-size: 1.2em;
+      margin-bottom: 20px;
+    }
+    #retry-button, #close-intro {
+      padding: 10px 30px;
+      background: #f9b642;
       border: none;
-      color: #fff;
-      font-size: 1.5rem;
+      border-radius: 8px;
+      color: black;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      font-size: 1.1em;
       cursor: pointer;
+    }
+    #retry-button:hover, #close-intro:hover {
+      background: #ffca5b;
+    }
+    .hidden {
+      display: none;
+    }
+    .blink {
+      animation: blink-animation 1s infinite;
+    }
+    @keyframes blink-animation {
+      0% { opacity: 1; }
+      50% { opacity: 0; }
+      100% { opacity: 1; }
+    }
+    /* Estilo especial para el segundo mensaje verde */
+    .success-subtitle {
+      color: #00ff00;
+      font-weight: bold;
+      animation: blink-animation 1s infinite;
+    }
+    /* Cerrar intro */
+    #close-x {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 28px;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
+  <div id="game-container">
+    <canvas id="game-canvas"></canvas>
 
-<!-- Modal de misión inicial -->
-<div id="missionModal" class="modal">
-  <div class="modal-content">
-    <button class="close-btn" onclick="closeModal()">✖</button>
-    <h2>Misión Final</h2>
-    <p>Debes unir los puntos siguiendo la secuencia correcta para reactivar la constelación Mathema.</p>
+    <!-- Mensaje de Introducción -->
+    <div id="intro-message">
+      <div id="close-x">✖</div>
+      <h1>Misión final</h1>
+      <p>Debes unir los puntos siguiendo la secuencia correcta para reactivar la constelación</p>
+      <button id="close-intro">Comenzar</button>
+    </div>
+
+    <!-- Mensaje de Fin -->
+    <div id="message" class="hidden">
+      <h1 id="message-title"></h1>
+      <p id="message-subtitle"></p>
+      <button id="retry-button">Reintentar</button>
+    </div>
   </div>
-</div>
 
-<!-- Contenedor principal de las operaciones -->
-<div class="container">
-  <div class="card">1+1</div>
-  <div class="card">40+3</div>
-  <div class="card">(9+2)×3+1</div>
-  <div class="card">7×4+1</div>
-  <div class="card">10+9</div>
-  <div class="card">f(5)=2x+3</div>
-  <div class="card">3²-2</div>
-  <div class="card">10-7</div>
-  <div class="card">7²-2</div>
-  <div class="card">80/2+15⁰</div>
-  <div class="card">d/dx(31x+7)</div>
-  <div class="card">48/2+(-1)</div>
-  <div class="card">(-3×-6)-1</div>
-  <div class="card">1+5×2</div>
-  <div class="card">530/106</div>
-</div>
+  <!-- Aquí sigue tu script (no lo toco, solo añado lo necesario) -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+  <script>
+    const canvas = document.getElementById('game-canvas');
+    const ctx = canvas.getContext('2d');
+    const messageBox = document.getElementById('message');
+    const messageTitle = document.getElementById('message-title');
+    const messageSubtitle = document.getElementById('message-subtitle');
+    const retryButton = document.getElementById('retry-button');
 
-<!-- Mensaje de éxito (aparece cuando se completa el reto) -->
-<div id="successMessage" class="blink" style="display: none;">
-  ¡Constelación Mathema reactivada!
-</div>
+    const introMessage = document.getElementById('intro-message');
+    const closeIntroButton = document.getElementById('close-intro');
+    const closeX = document.getElementById('close-x');
 
-<script>
-  function closeModal() {
-    document.getElementById('missionModal').style.display = 'none';
-  }
+    let canvasWidth = window.innerWidth;
+    let canvasHeight = window.innerHeight;
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
 
-  // Función para simular mostrar mensaje de éxito después de un tiempo
-  // (puedes quitarlo y hacer que se active cuando completes el reto de verdad)
-  setTimeout(() => {
-    // document.getElementById('successMessage').style.display = 'block';
-  }, 5000); // Ahora está comentado, activalo cuando quieras
-</script>
+    let centerX = canvasWidth / 2;
+    let centerY = canvasHeight / 2;
+    let outerRadius = Math.min(canvasWidth, canvasHeight) / 2.5;
+    let points = [];
 
+    const labels = [
+      "1 + 1", 
+      "40 + 3", 
+      "(9 + 2) × 3 + 1", 
+      "7 × 4 + 1", 
+      "10 + 9", 
+      "f(5) = 2x + 3", 
+      "3² - 2", 
+      "10 - 7", 
+      "7² - 2", 
+      "80 ÷ 2 + 15⁰", 
+      "d/dx 31x +7", 
+      "48 ÷ 2 + (-1)", 
+      "(-3 × -6) - 1", 
+      "1 + 5×2", 
+      "530 ÷ 106"
+    ];
+
+    const totalPoints = labels.length;
+    const jump = 7;
+    const correctSequence = [];
+    for (let i = 0; i < totalPoints; i++) {
+      correctSequence.push((i * jump) % totalPoints);
+    }
+
+    for (let i = 0; i < totalPoints; i++) {
+      let angle = (i * Math.PI * 2) / totalPoints - Math.PI/2;
+      points.push({
+        x: centerX + outerRadius * Math.cos(angle),
+        y: centerY + outerRadius * Math.sin(angle)
+      });
+    }
+
+    let userSequence = [];
+    let animationProgress = 0;
+    let isAnimating = false;
+
+    function draw() {
+      ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+      ctx.strokeStyle = 'white';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let i = 0; i < userSequence.length - 1; i++) {
+        let p1 = points[userSequence[i]];
+        let p2 = points[userSequence[i + 1]];
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+      }
+      ctx.stroke();
+
+      points.forEach((p, idx) => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
+        ctx.fillStyle = 'white';
+        ctx.fill();
+        ctx.strokeStyle = 'white';
+        ctx.shadowColor = 'white';
+        ctx.shadowBlur = 8;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 14px Quicksand';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(labels[idx], p.x, p.y - 25);
+      });
+
+      if (isAnimating) animateLine();
+    }
+
+    function getClickedPoint(x, y) {
+      for (let i = 0; i < points.length; i++) {
+        let p = points[i];
+        let dx = p.x - x;
+        let dy = p.y - y;
+        if (Math.sqrt(dx * dx + dy * dy) < 20) {
+          return i;
+        }
+      }
+      return null;
+    }
+
+    function pointerEvent(e) {
+      if (isAnimating) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+      const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+      const clicked = getClickedPoint(x, y);
+      if (clicked !== null && !userSequence.includes(clicked)) {
+        userSequence.push(clicked);
+        if (userSequence.length === points.length) {
+          checkSequence();
+        }
+        draw();
+      }
+    }
+
+    canvas.addEventListener('click', pointerEvent);
+    canvas.addEventListener('touchstart', pointerEvent);
+
+    function checkSequence() {
+      if (arraysEqual(userSequence, correctSequence)) {
+        showSuccess();
+      } else {
+        showError();
+      }
+    }
+
+    function arraysEqual(a1, a2) {
+      return JSON.stringify(a1) === JSON.stringify(a2);
+    }
+
+    function showSuccess() {
+      isAnimating = true;
+      animationProgress = 0;
+      confetti();
+      animateLine();
+      setTimeout(() => {
+        messageTitle.classList.remove('blink');
+        messageTitle.style.color = "white";
+        messageTitle.textContent = "ENHORABUENA, MISIÓN SUPERADA CON ÉXITO";
+        messageSubtitle.className = 'success-subtitle'; // Cambiamos a verde parpadeante
+        messageSubtitle.textContent = "Constelación Mathema reactivada";
+        messageBox.classList.remove('hidden');
+      }, 3000);
+    }
+
+    function showError() {
+      messageTitle.classList.add('blink');
+      messageTitle.style.color = "red";
+      messageTitle.textContent = "ERROR";
+      messageSubtitle.className = ''; // quitamos clases especiales
+      messageSubtitle.textContent = "La constelación Mathema no se ha podido reactivar";
+      messageBox.classList.remove('hidden');
+    }
+
+    retryButton.addEventListener('click', () => {
+      userSequence = [];
+      isAnimating = false;
+      messageBox.classList.add('hidden');
+      draw();
+    });
+
+    function animateLine() {
+      ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+      ctx.strokeStyle = 'white';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let i = 0; i < correctSequence.length; i++) {
+        let p1 = points[correctSequence[i]];
+        let p2 = points[correctSequence[(i + 1) % correctSequence.length]];
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+      }
+      ctx.stroke();
+
+      ctx.beginPath();
+      for (let i = 0; i < Math.floor(animationProgress); i++) {
+        let p1 = points[correctSequence[i]];
+        let p2 = points[correctSequence[(i + 1) % correctSequence.length]];
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+      }
+      ctx.strokeStyle = 'deeppink';
+      ctx.lineWidth = 6;
+      ctx.shadowColor = 'pink';
+      ctx.shadowBlur = 20;
+      ctx.stroke();
+
+      points.forEach((p, idx) => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
+        ctx.fillStyle = 'white';
+        ctx.fill();
+        ctx.strokeStyle = 'white';
+        ctx.shadowColor = 'white';
+        ctx.shadowBlur = 8;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 14px Quicksand';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(labels[idx], p.x, p.y - 25);
+      });
+    }
+
+    // Lógica para cerrar la intro
+    closeIntroButton.addEventListener('click', () => {
+      introMessage.classList.add('hidden');
+    });
+    closeX.addEventListener('click', () => {
+      introMessage.classList.add('hidden');
+    });
+
+    // Dibujar fondo mientras está la intro abierta
+    draw();
+  </script>
 </body>
 </html>
+
