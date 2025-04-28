@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Unir los Puntos - Estrella</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Quicksand:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Quicksand&display=swap" rel="stylesheet">
   <style>
     body, html {
       margin: 0;
@@ -31,52 +31,49 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: rgba(255, 255, 255, 0.2);
+      background: rgba(20, 20, 20, 0.6);
       backdrop-filter: blur(10px);
-      color: black;
+      color: white;
       padding: 30px;
-      border-radius: 20px;
+      border-radius: 15px;
       text-align: center;
       z-index: 10;
-      width: 80%;
-      max-width: 400px;
+      max-width: 90%;
     }
     #message h1 {
       font-family: 'Quicksand', sans-serif;
-      font-size: 28px;
+      font-size: 2em;
       margin-bottom: 10px;
     }
     #message p {
       font-family: 'Quicksand', sans-serif;
-      font-size: 18px;
+      font-size: 1.2em;
       margin-bottom: 20px;
     }
-    .hidden {
-      display: none;
-    }
     #retry-button {
-      margin-top: 10px;
-      padding: 12px 24px;
+      padding: 10px 30px;
       background: #f9b642;
       border: none;
       border-radius: 8px;
       color: black;
       font-family: 'Orbitron', sans-serif;
       font-weight: 900;
-      font-size: 16px;
+      font-size: 1.1em;
       cursor: pointer;
-      transition: background 0.3s;
     }
     #retry-button:hover {
-      background: #ffd26c;
+      background: #ffca5b;
     }
-    .error-text {
-      color: red;
-      animation: blink 1s infinite;
+    .hidden {
+      display: none;
     }
-    @keyframes blink {
-      0%, 50%, 100% { opacity: 1; }
-      25%, 75% { opacity: 0; }
+    .blink {
+      animation: blink-animation 1s infinite;
+    }
+    @keyframes blink-animation {
+      0% { opacity: 1; }
+      50% { opacity: 0; }
+      100% { opacity: 1; }
     }
   </style>
 </head>
@@ -109,7 +106,25 @@
     let outerRadius = Math.min(canvasWidth, canvasHeight) / 2.5;
     let points = [];
 
-    const totalPoints = 15;
+    const labels = [
+      "1 + 1", 
+      "40 + 3", 
+      "(9 + 2) × 3 + 1", 
+      "7 × 4 + 1", 
+      "10 + 9", 
+      "f(5) = 2x + 3", 
+      "3² - 2", 
+      "10 - 7", 
+      "7² - 2", 
+      "80 ÷ 2 + 15⁰", 
+      "d/dx 31x +7", 
+      "48 ÷ 2 + (-1)", 
+      "(-3 × -6) - 1", 
+      "1 + 5×2", 
+      "530 ÷ 106"
+    ];
+
+    const totalPoints = labels.length;
     const jump = 7;
     const correctSequence = [];
     for (let i = 0; i < totalPoints; i++) {
@@ -131,7 +146,7 @@
     function draw() {
       ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
-      // Dibujar líneas del usuario
+      // Líneas del usuario
       ctx.strokeStyle = 'white';
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -143,23 +158,24 @@
       }
       ctx.stroke();
 
-      // Dibujar puntos
+      // Dibujar puntos y etiquetas
       points.forEach((p, idx) => {
         ctx.beginPath();
-        ctx.arc(p.x, p.y, 8, 0, Math.PI * 2); // tamaño más pequeño
+        ctx.arc(p.x, p.y, 8, 0, Math.PI * 2); // más pequeño y más elegante
         ctx.fillStyle = 'white';
         ctx.fill();
-        ctx.strokeStyle = 'white'; // LED blanco
-        ctx.lineWidth = 3;
+        ctx.strokeStyle = 'white';
         ctx.shadowColor = 'white';
-        ctx.shadowBlur = 15;
+        ctx.shadowBlur = 8;
+        ctx.lineWidth = 2;
         ctx.stroke();
-        ctx.shadowBlur = 0; // quitar blur para otros dibujos
+        ctx.shadowBlur = 0;
+
         ctx.fillStyle = 'white';
-        ctx.font = '16px Quicksand';
+        ctx.font = 'bold 14px Quicksand';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText((idx + 1), p.x, p.y - 20);
+        ctx.fillText(labels[idx], p.x, p.y - 25);
       });
 
       if (isAnimating) animateLine();
@@ -216,17 +232,19 @@
       confetti();
       animateLine();
       setTimeout(() => {
-        messageTitle.classList.remove('error-text');
-        messageTitle.textContent = "¡Enhorabuena! Misión superada con éxito.";
-        messageSubtitle.textContent = "Constelación Mathema reactivada.";
+        messageTitle.classList.remove('blink');
+        messageTitle.style.color = "white";
+        messageTitle.textContent = "ENHORABUENA, MISIÓN SUPERADA CON ÉXITO";
+        messageSubtitle.textContent = "Constelación Mathema reactivada";
         messageBox.classList.remove('hidden');
       }, 3000);
     }
 
     function showError() {
-      messageTitle.classList.add('error-text');
-      messageTitle.textContent = "¡Error!";
-      messageSubtitle.textContent = "La constelación Mathema no se ha podido reactivar.";
+      messageTitle.classList.add('blink');
+      messageTitle.style.color = "red";
+      messageTitle.textContent = "ERROR";
+      messageSubtitle.textContent = "La constelación Mathema no se ha podido reactivar";
       messageBox.classList.remove('hidden');
     }
 
@@ -270,16 +288,17 @@
         ctx.fillStyle = 'white';
         ctx.fill();
         ctx.strokeStyle = 'white';
-        ctx.lineWidth = 3;
         ctx.shadowColor = 'white';
-        ctx.shadowBlur = 15;
+        ctx.shadowBlur = 8;
+        ctx.lineWidth = 2;
         ctx.stroke();
         ctx.shadowBlur = 0;
+
         ctx.fillStyle = 'white';
-        ctx.font = '16px Quicksand';
+        ctx.font = 'bold 14px Quicksand';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText((idx + 1), p.x, p.y - 20);
+        ctx.fillText(labels[idx], p.x, p.y - 25);
       });
 
       if (animationProgress < correctSequence.length) {
