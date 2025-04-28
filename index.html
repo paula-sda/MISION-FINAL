@@ -3,268 +3,247 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Unir Puntos - Constelación Mathema</title>
+  <title>Constelación Mathema</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Quicksand&display=swap" rel="stylesheet">
   <style>
-    body {
+    body, html {
       margin: 0;
-      background: #000;
+      padding: 0;
+      background: black;
+      height: 100%;
       overflow: hidden;
+      touch-action: none;
       font-family: 'Quicksand', sans-serif;
     }
-
-    canvas {
-      display: block;
-      width: 100vw;
-      height: 100vh;
-      touch-action: none;
+    #game-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
     }
-
-    .modal {
-      position: fixed;
+    #game-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    #message {
+      position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: rgba(0,0,0,0.8);
-      backdrop-filter: blur(8px);
-      padding: 2rem;
-      border-radius: 1rem;
-      text-align: center;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(10px);
       color: white;
+      padding: 30px;
+      border-radius: 15px;
+      text-align: center;
       z-index: 10;
-      display: none;
-      width: 90%;
-      max-width: 300px;
+      opacity: 0;
+      transition: opacity 1s ease-in-out;
     }
-
-    .modal h1 {
-      font-size: 1.8rem;
-      margin-bottom: 1rem;
+    #message.success {
+      opacity: 1;
     }
-
-    .modal p {
-      font-size: 1.2rem;
-      margin-bottom: 1.5rem;
-    }
-
-    .modal button {
-      background: #f9b642;
-      color: black;
-      border: none;
-      padding: 0.8rem 1.5rem;
-      font-family: 'Orbitron Black', sans-serif;
-      font-size: 1rem;
-      border-radius: 0.5rem;
-      cursor: pointer;
-    }
-
-    @keyframes blink {
-      0%, 50%, 100% { color: red; }
-      25%, 75% { color: darkred; }
-    }
-
-    .error h1 {
+    #error-text {
+      font-size: 28px;
+      font-weight: bold;
       animation: blink 1s infinite;
+      color: red;
+    }
+    @keyframes blink {
+      0%, 50%, 100% { opacity: 1; }
+      25%, 75% { opacity: 0; }
+    }
+    #subtext {
+      font-family: 'Quicksand', sans-serif;
+      margin-top: 10px;
+      font-size: 18px;
+    }
+    #retry-button {
+      margin-top: 20px;
+      padding: 12px 24px;
+      background: #f9b642;
+      border: none;
+      border-radius: 8px;
+      color: black;
+      font-size: 18px;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    #retry-button:hover {
+      background: #ffc766;
+    }
+    .hidden {
+      display: none;
     }
   </style>
 </head>
 <body>
-<canvas id="canvas"></canvas>
-
-<div class="modal" id="modal">
-  <h1 id="modalTitle"></h1>
-  <p id="modalMessage"></p>
-  <button onclick="location.reload()">Reintentar</button>
+<div id="game-container">
+  <canvas id="game-canvas"></canvas>
+  <div id="message" class="hidden">
+    <div id="message-text"></div>
+    <div id="subtext"></div>
+    <button id="retry-button">REINTENTAR</button>
+  </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
 <script>
-// Coordenadas de los puntos (en % relativas para que sea responsive)
-const points = [
-  {x:50, y:5},
-  {x:62, y:35},
-  {x:95, y:35},
-  {x:68, y:55},
-  {x:78, y:90},
-  {x:50, y:70},
-  {x:22, y:90},
-  {x:32, y:55},
-  {x:5, y:35},
-  {x:38, y:35},
-  {x:50, y:5} // Vuelve al inicio para cerrar
-];
-
-const canvas = document.getElementById('canvas');
+const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
-resizeCanvas();
+const messageBox = document.getElementById('message');
+const messageText = document.getElementById('message-text');
+const subtext = document.getElementById('subtext');
+const retryButton = document.getElementById('retry-button');
 
-let path = [];
-let completed = false;
-let correctSequence = [...Array(points.length).keys()]; // [0,1,2,3...]
+let canvasWidth = window.innerWidth;
+let canvasHeight = window.innerHeight;
+canvas.width = canvasWidth;
+canvas.height = canvasHeight;
 
-// EVENTOS
-canvas.addEventListener('pointerdown', handleClick);
-window.addEventListener('resize', resizeCanvas);
+let centerX = canvasWidth / 2;
+let centerY = canvasHeight / 2;
+let outerRadius = Math.min(canvasWidth, canvasHeight) / 3.5;
+let points = [];
 
-function resizeCanvas() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  draw();
+const totalPoints = 15;
+
+const customSequence = [0, 7, 2, 9, 4, 11, 6, 13, 8, 1, 10, 3, 12, 5, 14];
+
+// Distribución aleatoria para que la estrella no tenga patrón claro
+for (let i = 0; i < totalPoints; i++) {
+  let angle = (i * Math.PI * 2) / totalPoints - Math.PI/2;
+  let radius = (i % 2 === 0) ? outerRadius : outerRadius * 0.8;
+  points.push({
+    x: centerX + radius * Math.cos(angle),
+    y: centerY + radius * Math.sin(angle)
+  });
 }
+
+let userSequence = [];
+let isAnimating = false;
+let animationProgress = 0;
 
 function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
-  // Dibujar líneas ya unidas
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = completed ? '#ff00ff' : 'white'; // Rosa si completado
-  ctx.beginPath();
-  for (let i = 0; i < path.length; i++) {
-    let p = getPoint(path[i]);
-    if (i === 0) ctx.moveTo(p.x, p.y);
-    else ctx.lineTo(p.x, p.y);
-  }
-  ctx.stroke();
-
-  // Dibujar puntos
-  points.forEach((pt, i) => {
-    const pos = getPoint(i);
+  // Dibujar puntos y líneas según el progreso
+  points.forEach((p, idx) => {
     ctx.beginPath();
-    ctx.arc(pos.x, pos.y, 8, 0, Math.PI * 2);
+    ctx.arc(p.x, p.y, 12, 0, Math.PI * 2);
     ctx.fillStyle = 'white';
     ctx.fill();
-    ctx.shadowColor = '#00ffff';
-    ctx.shadowBlur = 10;
-    ctx.strokeStyle = 'white';
+    ctx.strokeStyle = 'cyan';
+    ctx.lineWidth = 2;
     ctx.stroke();
-    ctx.shadowBlur = 0;
 
-    // Número del punto
     ctx.fillStyle = 'white';
-    ctx.font = 'bold 14px Quicksand';
-    ctx.fillText(i + 1, pos.x - 4, pos.y + 4);
+    ctx.font = '18px Quicksand';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText((idx + 1), p.x, p.y - 20);
   });
-}
 
-function getPoint(index) {
-  return {
-    x: points[index].x / 100 * canvas.width,
-    y: points[index].y / 100 * canvas.height
-  };
-}
-
-function handleClick(e) {
-  if (completed) return;
-  const rect = canvas.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
-
-  let nearest = -1;
-  let minDist = 20;
-
-  points.forEach((pt, i) => {
-    const p = getPoint(i);
-    const dx = p.x - x;
-    const dy = p.y - y;
-    const dist = Math.sqrt(dx*dx + dy*dy);
-    if (dist < minDist) {
-      nearest = i;
-      minDist = dist;
+  // Iluminar líneas de rosa neón en la secuencia correcta
+  if (isAnimating) {
+    ctx.strokeStyle = 'deeppink';
+    ctx.lineWidth = 6;
+    ctx.shadowColor = 'pink';
+    ctx.shadowBlur = 20;
+    ctx.beginPath();
+    for (let i = 0; i < animationProgress; i++) {
+      let p1 = points[customSequence[i]];
+      let p2 = points[customSequence[i + 1]];
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
     }
-  });
+    ctx.stroke();
+  }
+}
 
-  if (nearest !== -1 && !path.includes(nearest)) {
-    path.push(nearest);
-    draw();
+function getClickedPoint(x, y) {
+  for (let i = 0; i < points.length; i++) {
+    let p = points[i];
+    let dx = p.x - x;
+    let dy = p.y - y;
+    if (Math.sqrt(dx * dx + dy * dy) < 20) {
+      return i;
+    }
+  }
+  return null;
+}
 
-    if (path.length === points.length) {
+function pointerEvent(e) {
+  if (isAnimating) return;
+
+  const rect = canvas.getBoundingClientRect();
+  const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+  const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+
+  const clicked = getClickedPoint(x, y);
+  if (clicked !== null && !userSequence.includes(clicked)) {
+    userSequence.push(clicked);
+
+    if (userSequence.length === points.length) {
       checkSequence();
     }
+    draw();
   }
 }
+
+canvas.addEventListener('click', pointerEvent);
+canvas.addEventListener('touchstart', pointerEvent);
 
 function checkSequence() {
-  let correct = true;
-  for (let i = 0; i < path.length; i++) {
-    if (path[i] !== correctSequence[i]) {
-      correct = false;
-      break;
-    }
-  }
-  if (correct) {
-    animateLine();
-    showModal(true);
-    launchConfetti();
+  if (arraysEqual(userSequence, customSequence)) {
+    showSuccess();
   } else {
-    showModal(false);
+    showError();
   }
 }
+
+function arraysEqual(a1, a2) {
+  return JSON.stringify(a1) === JSON.stringify(a2);
+}
+
+function showSuccess() {
+  isAnimating = true;
+  animationProgress = 0;
+  animateLine();
+  setTimeout(() => {
+    messageText.innerHTML = "<span style='font-size: 32px;'>✨✨✨<br>Enhorabuena, misión conseguida!!<br>Constelación Mathema reactivada correctamente.</span>";
+    messageBox.classList.add('success');
+    setTimeout(() => {
+      messageBox.classList.remove('hidden');
+    }, 1000);
+  }, 5000); // Tiempo para ver la estrella iluminada
+}
+
+function showError() {
+  messageText.innerHTML = "<div id='error-text'>ERROR</div>";
+  subtext.innerHTML = "Constelación no reactivada";
+  messageBox.classList.remove('hidden');
+}
+
+retryButton.addEventListener('click', () => {
+  userSequence = [];
+  isAnimating = false;
+  messageBox.classList.add('hidden');
+  draw();
+});
 
 function animateLine() {
-  completed = true;
-  let progress = 0;
-  const interval = setInterval(() => {
-    progress += 0.05;
-    if (progress >= 1) {
-      clearInterval(interval);
-      draw();
-    }
-    ctx.strokeStyle = `hsl(300,100%,${50+progress*50}%)`;
-    draw();
-  }, 50);
+  if (animationProgress < customSequence.length - 1) {
+    animationProgress += 0.1;
+    requestAnimationFrame(animateLine);
+  } else {
+    isAnimating = false;
+  }
 }
 
-function showModal(success) {
-  setTimeout(() => {
-    const modal = document.getElementById('modal');
-    const title = document.getElementById('modalTitle');
-    const message = document.getElementById('modalMessage');
-    if (success) {
-      title.textContent = '¡Misión completada con éxito!!';
-      message.textContent = 'La constelación Mathema reactivada';
-    } else {
-      modal.classList.add('error');
-      title.textContent = 'ERROR';
-      message.textContent = 'La constelación Mathema no reactivada';
-    }
-    modal.style.display = 'block';
-  }, 1000);
-}
-
-// Confeti sencillo
-function launchConfetti() {
-  const confetti = [];
-  for (let i = 0; i < 100; i++) {
-    confetti.push({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      r: Math.random() * 6 + 2,
-      dx: (Math.random() - 0.5) * 2,
-      dy: Math.random() * 2 + 2,
-      color: `hsl(${Math.random()*360},100%,50%)`
-    });
-  }
-  function animate() {
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    draw();
-    confetti.forEach(c => {
-      ctx.beginPath();
-      ctx.arc(c.x, c.y, c.r, 0, Math.PI*2);
-      ctx.fillStyle = c.color;
-      ctx.fill();
-      c.x += c.dx;
-      c.y += c.dy;
-      if (c.y > canvas.height) c.y = 0;
-      if (c.x > canvas.width) c.x = 0;
-      if (c.x < 0) c.x = canvas.width;
-    });
-    requestAnimationFrame(animate);
-  }
-  animate();
-}
+draw();
 </script>
-
-<!-- Fuentes -->
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Quicksand:wght@700&display=swap" rel="stylesheet">
-
 </body>
 </html>
-
