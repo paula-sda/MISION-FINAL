@@ -182,7 +182,7 @@
     function draw() {
       ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
-      // Líneas del usuario
+      // Dibujar líneas blancas mientras el usuario no complete la secuencia correctamente
       ctx.strokeStyle = 'white';
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -193,6 +193,11 @@
         ctx.lineTo(p2.x, p2.y);
       }
       ctx.stroke();
+
+      // Si la secuencia es correcta, empieza a cambiar las líneas a rosa neón
+      if (userSequence.length === points.length) {
+        animateNeonLines();
+      }
 
       // Dibujar puntos y etiquetas
       points.forEach((p, idx) => {
@@ -213,8 +218,6 @@
         ctx.textBaseline = 'middle';
         ctx.fillText(labels[idx], p.x, p.y - 25);
       });
-
-      if (isAnimating) animateLine();
     }
 
     function getClickedPoint(x, y) {
@@ -239,11 +242,42 @@
       const clicked = getClickedPoint(x, y);
       if (clicked !== null && !userSequence.includes(clicked)) {
         userSequence.push(clicked);
-
-        if (userSequence.length === points.length) {
-          checkSequence();
-        }
         draw();
+        checkSequence();
+      }
+    }
+
+    canvas.addEventListener('mousedown', pointerEvent);
+    canvas.addEventListener('touchstart', pointerEvent);
+
+    function animateNeonLines() {
+      if (animationProgress < userSequence.length - 1) {
+        let p1 = points[userSequence[animationProgress]];
+        let p2 = points[userSequence[animationProgress + 1]];
+
+        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+        // Líneas en blanco
+        for (let i = 0; i < userSequence.length - 1; i++) {
+          let p1 = points[userSequence[i]];
+          let p2 = points[userSequence[i + 1]];
+          ctx.strokeStyle = 'white';
+          ctx.beginPath();
+          ctx.moveTo(p1.x, p1.y);
+          ctx.lineTo(p2.x, p2.y);
+          ctx.stroke();
+        }
+
+        // Cambio a rosa neón
+        ctx.strokeStyle = 'pink';
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.stroke();
+
+        animationProgress++;
+        requestAnimationFrame(animateNeonLines);
       }
     }
 
@@ -265,28 +299,6 @@
           messageBox.classList.add('hidden');
         }, 3000);
       }, 1000);
-    }
-
-    function animateLine() {
-      ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-
-      ctx.strokeStyle = '#ff00ff'; // Rosa neón
-      ctx.lineWidth = 5;
-      ctx.beginPath();
-      let p1 = points[userSequence[0]];
-      ctx.moveTo(p1.x, p1.y);
-      for (let i = 1; i <= animationProgress; i++) {
-        let p2 = points[userSequence[i]];
-        ctx.lineTo(p2.x, p2.y);
-      }
-      ctx.stroke();
-      
-      if (animationProgress < userSequence.length - 1) {
-        animationProgress++;
-        requestAnimationFrame(animateLine);
-      } else {
-        isAnimating = false;
-      }
     }
 
     function showError() {
@@ -335,3 +347,4 @@
   </script>
 </body>
 </html>
+
