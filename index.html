@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Unir los Puntos - Estrella</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Quicksand:wght@400;700&display=swap" rel="stylesheet">
   <style>
     body, html {
       margin: 0;
@@ -12,7 +13,7 @@
       height: 100%;
       overflow: hidden;
       touch-action: none;
-      font-family: Arial, sans-serif;
+      font-family: 'Quicksand', sans-serif;
     }
     #game-container {
       position: relative;
@@ -30,28 +31,52 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: #222;
-      color: white;
-      padding: 20px;
-      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      color: black;
+      padding: 30px;
+      border-radius: 20px;
       text-align: center;
       z-index: 10;
+      width: 80%;
+      max-width: 400px;
+    }
+    #message h1 {
+      font-family: 'Quicksand', sans-serif;
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+    #message p {
+      font-family: 'Quicksand', sans-serif;
+      font-size: 18px;
+      margin-bottom: 20px;
     }
     .hidden {
       display: none;
     }
     #retry-button {
       margin-top: 10px;
-      padding: 10px 20px;
-      background: #ff5555;
+      padding: 12px 24px;
+      background: #f9b642;
       border: none;
-      border-radius: 5px;
-      color: white;
+      border-radius: 8px;
+      color: black;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
       font-size: 16px;
       cursor: pointer;
+      transition: background 0.3s;
     }
     #retry-button:hover {
-      background: #ff7777;
+      background: #ffd26c;
+    }
+    .error-text {
+      color: red;
+      animation: blink 1s infinite;
+    }
+    @keyframes blink {
+      0%, 50%, 100% { opacity: 1; }
+      25%, 75% { opacity: 0; }
     }
   </style>
 </head>
@@ -59,7 +84,8 @@
   <div id="game-container">
     <canvas id="game-canvas"></canvas>
     <div id="message" class="hidden">
-      <p id="message-text"></p>
+      <h1 id="message-title"></h1>
+      <p id="message-subtitle"></p>
       <button id="retry-button">Reintentar</button>
     </div>
   </div>
@@ -69,7 +95,8 @@
     const canvas = document.getElementById('game-canvas');
     const ctx = canvas.getContext('2d');
     const messageBox = document.getElementById('message');
-    const messageText = document.getElementById('message-text');
+    const messageTitle = document.getElementById('message-title');
+    const messageSubtitle = document.getElementById('message-subtitle');
     const retryButton = document.getElementById('retry-button');
 
     let canvasWidth = window.innerWidth;
@@ -119,15 +146,17 @@
       // Dibujar puntos
       points.forEach((p, idx) => {
         ctx.beginPath();
-        ctx.arc(p.x, p.y, 12, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, 8, 0, Math.PI * 2); // tamaño más pequeño
         ctx.fillStyle = 'white';
         ctx.fill();
-        ctx.strokeStyle = 'cyan';
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = 'white'; // LED blanco
+        ctx.lineWidth = 3;
+        ctx.shadowColor = 'white';
+        ctx.shadowBlur = 15;
         ctx.stroke();
-
+        ctx.shadowBlur = 0; // quitar blur para otros dibujos
         ctx.fillStyle = 'white';
-        ctx.font = '18px Arial';
+        ctx.font = '16px Quicksand';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText((idx + 1), p.x, p.y - 20);
@@ -187,13 +216,17 @@
       confetti();
       animateLine();
       setTimeout(() => {
-        messageText.textContent = "¡Enhorabuena! 🎉";
+        messageTitle.classList.remove('error-text');
+        messageTitle.textContent = "¡Enhorabuena! Misión superada con éxito.";
+        messageSubtitle.textContent = "Constelación Mathema reactivada.";
         messageBox.classList.remove('hidden');
       }, 3000);
     }
 
     function showError() {
-      messageText.textContent = "¡Ups! Secuencia incorrecta.";
+      messageTitle.classList.add('error-text');
+      messageTitle.textContent = "¡Error!";
+      messageSubtitle.textContent = "La constelación Mathema no se ha podido reactivar.";
       messageBox.classList.remove('hidden');
     }
 
@@ -233,15 +266,17 @@
 
       points.forEach((p, idx) => {
         ctx.beginPath();
-        ctx.arc(p.x, p.y, 12, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
         ctx.fillStyle = 'white';
         ctx.fill();
-        ctx.strokeStyle = 'cyan';
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 3;
+        ctx.shadowColor = 'white';
+        ctx.shadowBlur = 15;
         ctx.stroke();
-
+        ctx.shadowBlur = 0;
         ctx.fillStyle = 'white';
-        ctx.font = '18px Arial';
+        ctx.font = '16px Quicksand';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText((idx + 1), p.x, p.y - 20);
