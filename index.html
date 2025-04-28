@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -26,7 +26,7 @@
       display: block;
       touch-action: none;
     }
-    #message, #start-message {
+    #message {
       position: absolute;
       top: 50%;
       left: 50%;
@@ -39,35 +39,16 @@
       text-align: center;
       z-index: 10;
       max-width: 90%;
-      width: 80%;
     }
-    #start-message {
-      z-index: 20;
-      background: rgba(0, 0, 0, 0.9);
-    }
-    #start-message h1 {
+    #message h1 {
       font-family: 'Quicksand', sans-serif;
       font-size: 2em;
       margin-bottom: 10px;
     }
-    #start-message p {
+    #message p {
       font-family: 'Quicksand', sans-serif;
       font-size: 1.2em;
       margin-bottom: 20px;
-    }
-    #start-button {
-      padding: 10px 30px;
-      background: #f9b642;
-      border: none;
-      border-radius: 8px;
-      color: black;
-      font-family: 'Orbitron', sans-serif;
-      font-weight: 900;
-      font-size: 1.1em;
-      cursor: pointer;
-    }
-    #start-button:hover {
-      background: #ffca5b;
     }
     #retry-button {
       padding: 10px 30px;
@@ -94,26 +75,63 @@
       50% { opacity: 0; }
       100% { opacity: 1; }
     }
-    .blinking-green {
-      color: #32CD32; /* Color verde */
-      font-weight: bold;
-      animation: blink-animation 1s infinite;
+    /* Nuevos estilos para la pantalla de inicio */
+    #start-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      backdrop-filter: blur(5px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 20;
+      color: white;
+      text-align: center;
+      padding: 20px;
+      box-sizing: border-box;
     }
-    .neon-pink {
-      color: #ff00ff; /* Rosa neón */
-      font-weight: bold;
-      text-shadow: 0 0 5px #ff00ff, 0 0 10px #ff00ff, 0 0 15px #ff00ff;
+    #start-screen h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2em;
+      margin-bottom: 30px;
+      color: #f9b642;
+    }
+    #start-button {
+      padding: 15px 40px;
+      background: #f9b642;
+      border: none;
+      border-radius: 8px;
+      color: black;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      font-size: 1.2em;
+      cursor: pointer;
+      margin-top: 30px;
+    }
+    #start-button:hover {
+      background: #ffca5b;
+    }
+    /* Estilo modificado para el mensaje de éxito */
+    .success-subtitle {
+      color: #00ff00 !important;
+      font-weight: bold !important;
+      animation: blink-animation 1s infinite !important;
     }
   </style>
 </head>
 <body>
+  <div id="start-screen">
+    <h1>MISIÓN FINAL</h1>
+    <p>Debes unir los puntos siguiendo la secuencia correcta para reactivar la constelación</p>
+    <button id="start-button">COMENZAR</button>
+  </div>
+
   <div id="game-container">
     <canvas id="game-canvas"></canvas>
-    <div id="start-message">
-      <h1>Misión Final</h1>
-      <p>Debes unir los puntos siguiendo la secuencia correcta para reactivar la constelación</p>
-      <button id="start-button">Comenzar</button>
-    </div>
     <div id="message" class="hidden">
       <h1 id="message-title"></h1>
       <p id="message-subtitle"></p>
@@ -123,14 +141,17 @@
 
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
   <script>
+    // Manejar el botón de comenzar
+    document.getElementById('start-button').addEventListener('click', function() {
+      document.getElementById('start-screen').style.display = 'none';
+    });
+
     const canvas = document.getElementById('game-canvas');
     const ctx = canvas.getContext('2d');
     const messageBox = document.getElementById('message');
     const messageTitle = document.getElementById('message-title');
     const messageSubtitle = document.getElementById('message-subtitle');
     const retryButton = document.getElementById('retry-button');
-    const startMessage = document.getElementById('start-message');
-    const startButton = document.getElementById('start-button');
 
     let canvasWidth = window.innerWidth;
     let canvasHeight = window.innerHeight;
@@ -182,7 +203,7 @@
     function draw() {
       ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
-      // Dibujar líneas blancas mientras el usuario no complete la secuencia correctamente
+      // Líneas del usuario
       ctx.strokeStyle = 'white';
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -193,11 +214,6 @@
         ctx.lineTo(p2.x, p2.y);
       }
       ctx.stroke();
-
-      // Si la secuencia es correcta, empieza a cambiar las líneas a rosa neón
-      if (userSequence.length === points.length) {
-        animateNeonLines();
-      }
 
       // Dibujar puntos y etiquetas
       points.forEach((p, idx) => {
@@ -218,6 +234,8 @@
         ctx.textBaseline = 'middle';
         ctx.fillText(labels[idx], p.x, p.y - 25);
       });
+
+      if (isAnimating) animateLine();
     }
 
     function getClickedPoint(x, y) {
@@ -242,109 +260,115 @@
       const clicked = getClickedPoint(x, y);
       if (clicked !== null && !userSequence.includes(clicked)) {
         userSequence.push(clicked);
+
+        if (userSequence.length === points.length) {
+          checkSequence();
+        }
         draw();
-        checkSequence();
       }
     }
 
-    canvas.addEventListener('mousedown', pointerEvent);
+    canvas.addEventListener('click', pointerEvent);
     canvas.addEventListener('touchstart', pointerEvent);
 
-    function animateNeonLines() {
-      if (animationProgress < userSequence.length - 1) {
-        let p1 = points[userSequence[animationProgress]];
-        let p2 = points[userSequence[animationProgress + 1]];
-
-        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-
-        // Líneas en blanco
-        for (let i = 0; i < userSequence.length - 1; i++) {
-          let p1 = points[userSequence[i]];
-          let p2 = points[userSequence[i + 1]];
-          ctx.strokeStyle = 'white';
-          ctx.beginPath();
-          ctx.moveTo(p1.x, p1.y);
-          ctx.lineTo(p2.x, p2.y);
-          ctx.stroke();
-        }
-
-        // Cambio a rosa neón
-        ctx.strokeStyle = 'pink';
-        ctx.lineWidth = 5;
-        ctx.beginPath();
-        ctx.moveTo(p1.x, p1.y);
-        ctx.lineTo(p2.x, p2.y);
-        ctx.stroke();
-
-        animationProgress++;
-        requestAnimationFrame(animateNeonLines);
-      }
-    }
-
     function checkSequence() {
-      if (JSON.stringify(userSequence) === JSON.stringify(correctSequence)) {
-        animateSuccess();
+      if (arraysEqual(userSequence, correctSequence)) {
+        showSuccess();
       } else {
         showError();
       }
     }
 
-    function animateSuccess() {
+    function arraysEqual(a1, a2) {
+      return JSON.stringify(a1) === JSON.stringify(a2);
+    }
+
+    function showSuccess() {
       isAnimating = true;
+      animationProgress = 0;
+      confetti();
+      animateLine();
       setTimeout(() => {
-        messageTitle.textContent = "¡Felicidades!";
-        messageSubtitle.textContent = "¡Has completado la secuencia!";
+        messageTitle.classList.remove('blink');
+        messageTitle.style.color = "white";
+        messageTitle.textContent = "ENHORABUENA, MISIÓN SUPERADA CON ÉXITO";
+        messageSubtitle.textContent = "Constelación Mathema reactivada";
+        messageSubtitle.classList.add('success-subtitle');
         messageBox.classList.remove('hidden');
-        setTimeout(() => {
-          messageBox.classList.add('hidden');
-        }, 3000);
-      }, 1000);
+      }, 3000);
     }
 
     function showError() {
       messageTitle.classList.add('blink');
       messageTitle.style.color = "red";
-      messageTitle.textContent = "¡Oops! Intentémoslo de nuevo.";
-      messageSubtitle.textContent = "La secuencia no es correcta.";
+      messageTitle.textContent = "ERROR";
+      messageSubtitle.textContent = "La constelación Mathema no se ha podido reactivar";
+      messageSubtitle.classList.remove('success-subtitle');
       messageBox.classList.remove('hidden');
     }
 
     retryButton.addEventListener('click', () => {
       userSequence = [];
-      points = [];
-      startMessage.classList.remove('hidden');
-      messageBox.classList.add('hidden');
-      init();
-    });
-
-    startButton.addEventListener('click', () => {
-      startMessage.classList.add('hidden');
-      init();
-    });
-
-    function init() {
       isAnimating = false;
-      canvasWidth = window.innerWidth;
-      canvasHeight = window.innerHeight;
-      canvas.width = canvasWidth;
-      canvas.height = canvasHeight;
-      centerX = canvasWidth / 2;
-      centerY = canvasHeight / 2;
-      outerRadius = Math.min(canvasWidth, canvasHeight) / 2.5;
-      points = [];
-      userSequence = [];
-      animationProgress = 0;
-
-      for (let i = 0; i < totalPoints; i++) {
-        let angle = (i * Math.PI * 2) / totalPoints - Math.PI / 2;
-        points.push({
-          x: centerX + outerRadius * Math.cos(angle),
-          y: centerY + outerRadius * Math.sin(angle)
-        });
-      }
+      messageBox.classList.add('hidden');
       draw();
+    });
+
+    function animateLine() {
+      ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+      ctx.strokeStyle = 'white';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let i = 0; i < correctSequence.length; i++) {
+        let p1 = points[correctSequence[i]];
+        let p2 = points[correctSequence[(i + 1) % correctSequence.length]];
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+      }
+      ctx.stroke();
+
+      ctx.beginPath();
+      for (let i = 0; i < Math.floor(animationProgress); i++) {
+        let p1 = points[correctSequence[i]];
+        let p2 = points[correctSequence[(i + 1) % correctSequence.length]];
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+      }
+      ctx.strokeStyle = 'deeppink';
+      ctx.lineWidth = 6;
+      ctx.shadowColor = 'pink';
+      ctx.shadowBlur = 20;
+      ctx.stroke();
+
+      points.forEach((p, idx) => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
+        ctx.fillStyle = 'white';
+        ctx.fill();
+        ctx.strokeStyle = 'white';
+        ctx.shadowColor = 'white';
+        ctx.shadowBlur = 8;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 14px Quicksand';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(labels[idx], p.x, p.y - 25);
+      });
+
+      if (animationProgress < correctSequence.length) {
+        animationProgress += 0.1;
+        requestAnimationFrame(animateLine);
+      } else {
+        isAnimating = false;
+      }
     }
+
+    draw();
   </script>
 </body>
 </html>
-
