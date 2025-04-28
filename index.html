@@ -99,6 +99,11 @@
       font-weight: bold;
       animation: blink-animation 1s infinite;
     }
+    .neon-pink {
+      color: #ff00ff; /* Rosa neón */
+      font-weight: bold;
+      text-shadow: 0 0 5px #ff00ff, 0 0 10px #ff00ff, 0 0 15px #ff00ff;
+    }
   </style>
 </head>
 <body>
@@ -273,57 +278,49 @@
     }
 
     function showError() {
-      messageTitle.classList.add('blink');
+      messageTitle.classList.remove('blink');
       messageTitle.style.color = "red";
-      messageTitle.textContent = "ERROR";
-      messageSubtitle.textContent = "La constelación Mathema no se ha podido reactivar";
+      messageTitle.textContent = "¡Oops! Intentémoslo de nuevo.";
+      messageSubtitle.textContent = "La secuencia no es correcta.";
       messageBox.classList.remove('hidden');
     }
 
     retryButton.addEventListener('click', () => {
       userSequence = [];
-      isAnimating = false;
+      points = [];
+      startMessage.classList.remove('hidden');
       messageBox.classList.add('hidden');
-      draw();
+      init();
     });
 
     startButton.addEventListener('click', () => {
       startMessage.classList.add('hidden');
-      draw();
+      init();
     });
 
-    function animateLine() {
-      ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+    function init() {
+      isAnimating = false;
+      canvasWidth = window.innerWidth;
+      canvasHeight = window.innerHeight;
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
+      centerX = canvasWidth / 2;
+      centerY = canvasHeight / 2;
+      outerRadius = Math.min(canvasWidth, canvasHeight) / 2.5;
+      points = [];
+      userSequence = [];
+      animationProgress = 0;
 
-      ctx.strokeStyle = 'white';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      for (let i = 0; i < correctSequence.length; i++) {
-        let p1 = points[correctSequence[i]];
-        let p2 = points[correctSequence[(i + 1) % correctSequence.length]]; 
-        ctx.moveTo(p1.x, p1.y);
-        ctx.lineTo(p2.x, p2.y);
+      for (let i = 0; i < totalPoints; i++) {
+        let angle = (i * Math.PI * 2) / totalPoints - Math.PI / 2;
+        points.push({
+          x: centerX + outerRadius * Math.cos(angle),
+          y: centerY + outerRadius * Math.sin(angle)
+        });
       }
-      ctx.stroke();
-
-      ctx.beginPath();
-      for (let i = 0; i < Math.floor(animationProgress); i++) {
-        let p1 = points[correctSequence[i]];
-        let p2 = points[correctSequence[(i + 1) % correctSequence.length]];
-        ctx.moveTo(p1.x, p1.y);
-        ctx.lineTo(p2.x, p2.y);
-      }
-      ctx.stroke();
-
-      animationProgress += 0.05;
-      if (animationProgress >= correctSequence.length) {
-        isAnimating = false;
-        animationProgress = 0;
-        showSuccess();
-      } else {
-        requestAnimationFrame(animateLine);
-      }
+      draw();
     }
   </script>
 </body>
 </html>
+
