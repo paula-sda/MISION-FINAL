@@ -37,6 +37,11 @@
       border-radius: 15px;
       text-align: center;
       z-index: 10;
+      opacity: 0;
+      transition: opacity 1s ease-in-out;
+    }
+    #message.success {
+      opacity: 1;
     }
     #error-text {
       font-size: 28px;
@@ -100,38 +105,31 @@ canvas.height = canvasHeight;
 
 let centerX = canvasWidth / 2;
 let centerY = canvasHeight / 2;
-let outerRadius = Math.min(canvasWidth, canvasHeight) / 2.5;
+let outerRadius = Math.min(canvasWidth, canvasHeight) / 3.5;
 let points = [];
 
 const totalPoints = 15;
 
 const customSequence = [0, 7, 2, 9, 4, 11, 6, 13, 8, 1, 10, 3, 12, 5, 14];
 
+// Distribución aleatoria para que la estrella no tenga patrón claro
 for (let i = 0; i < totalPoints; i++) {
   let angle = (i * Math.PI * 2) / totalPoints - Math.PI/2;
+  let radius = (i % 2 === 0) ? outerRadius : outerRadius * 0.8;
   points.push({
-    x: centerX + outerRadius * Math.cos(angle),
-    y: centerY + outerRadius * Math.sin(angle)
+    x: centerX + radius * Math.cos(angle),
+    y: centerY + radius * Math.sin(angle)
   });
 }
 
 let userSequence = [];
 let isAnimating = false;
+let animationProgress = 0;
 
 function draw() {
   ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
-  ctx.strokeStyle = 'white';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  for (let i = 0; i < userSequence.length - 1; i++) {
-    let p1 = points[userSequence[i]];
-    let p2 = points[userSequence[i + 1]];
-    ctx.moveTo(p1.x, p1.y);
-    ctx.lineTo(p2.x, p2.y);
-  }
-  ctx.stroke();
-
+  // Dibujar puntos y líneas según el progreso
   points.forEach((p, idx) => {
     ctx.beginPath();
     ctx.arc(p.x, p.y, 12, 0, Math.PI * 2);
@@ -147,6 +145,22 @@ function draw() {
     ctx.textBaseline = 'middle';
     ctx.fillText((idx + 1), p.x, p.y - 20);
   });
+
+  // Iluminar líneas de rosa neón en la secuencia correcta
+  if (isAnimating) {
+    ctx.strokeStyle = 'deeppink';
+    ctx.lineWidth = 6;
+    ctx.shadowColor = 'pink';
+    ctx.shadowBlur = 20;
+    ctx.beginPath();
+    for (let i = 0; i < animationProgress; i++) {
+      let p1 = points[customSequence[i]];
+      let p2 = points[customSequence[i + 1]];
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+    }
+    ctx.stroke();
+  }
 }
 
 function getClickedPoint(x, y) {
@@ -196,11 +210,15 @@ function arraysEqual(a1, a2) {
 
 function showSuccess() {
   isAnimating = true;
-  confetti();
-  messageText.innerHTML = "\u2728\u2728\u2728 <br> Enhorabuena, misión conseguida!! <br> Constelación Mathema reactivada correctamente.";
-  messageText.style.animation = '';
-  subtext.innerHTML = '';
-  messageBox.classList.remove('hidden');
+  animationProgress = 0;
+  animateLine();
+  setTimeout(() => {
+    messageText.innerHTML = "<span style='font-size: 32px;'>✨✨✨<br>Enhorabuena, misión conseguida!!<br>Constelación Mathema reactivada correctamente.</span>";
+    messageBox.classList.add('success');
+    setTimeout(() => {
+      messageBox.classList.remove('hidden');
+    }, 1000);
+  }, 5000); // Tiempo para ver la estrella iluminada
 }
 
 function showError() {
@@ -215,6 +233,15 @@ retryButton.addEventListener('click', () => {
   messageBox.classList.add('hidden');
   draw();
 });
+
+function animateLine() {
+  if (animationProgress < customSequence.length - 1) {
+    animationProgress += 0.1;
+    requestAnimationFrame(animateLine);
+  } else {
+    isAnimating = false;
+  }
+}
 
 draw();
 </script>
